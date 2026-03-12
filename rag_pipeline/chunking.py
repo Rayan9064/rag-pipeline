@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 
+from dataclasses import dataclass
+from typing import List
+import os
 
 @dataclass
 class TextChunk:
@@ -9,40 +11,61 @@ class TextChunk:
     source: str
     text: str
 
+def load_txt(file_path: str) -> str:
+    with open(file_path, "r", encoding="utf-8") as f:
+        return f.read()
 
-def chunk_text(
-    text: str,
-    source: str,
-    chunk_size: int = 500,
-    chunk_overlap: int = 100,
-) -> list[TextChunk]:
-    if chunk_overlap >= chunk_size:
-        raise ValueError("chunk_overlap must be smaller than chunk_size")
+def load_pdf(file_path: str) -> str:
+    import pdfplumber
+    text = ""
+    with pdfplumber.open(file_path) as pdf:
+        for page in pdf.pages:
+            text += page.extract_text() or ""
+    return text
 
-    normalized = " ".join(text.split())
-    if not normalized:
-        return []
+def load_docx(file_path: str) -> str:
+    from docx import Document
+    doc = Document(file_path)
+    return "\n".join([para.text for para in doc.paragraphs])
 
-    step = chunk_size - chunk_overlap
-    chunks: list[TextChunk] = []
+def load_documents(folder: str) -> List[dict]:
+    docs = []
+    for fname in os.listdir(folder):
+        fpath = os.path.join(folder, fname)
+        if fname.lower().endswith(".txt"):
+            text = load_txt(fpath)
+        elif fname.lower().endswith(".pdf"):
+            text = load_pdf(fpath)
+        elif fname.lower().endswith(".docx"):
+            text = load_docx(fpath)
+        else:
+            continue
+        docs.append({"source": fname, "text": text})
+    return docs
 
-    start = 0
-    chunk_index = 0
-    while start < len(normalized):
-        end = min(start + chunk_size, len(normalized))
-        snippet = normalized[start:end].strip()
-        if snippet:
-            chunks.append(
-                TextChunk(
-                    chunk_id=f"{source}::chunk_{chunk_index}",
-                    source=source,
-                    text=snippet,
+def chunk_documents(docs: List[dict], chunk_size: int = 500, chunk_overlap: int = 100) -> List[TextChunk]:
+    chunks: List[TextChunk] = []
+    for doc in docs:
+        text = " ".join(doc["text"].split())
+        source = doc["source"]
+        if not text:
+            continue
+        step = chunk_size - chunk_overlap
+        start = 0
+        chunk_index = 0
+        while start < len(text):
+            end = min(start + chunk_size, len(text))
+            snippet = text[start:end].strip()
+            if snippet:
+                chunks.append(
+                    TextChunk(
+                        chunk_id=f"{source}::chunk_{chunk_index}",
+                        source=source,
+                        text=snippet,
+                    )
                 )
-            )
-            chunk_index += 1
-
-        if end == len(normalized):
-            break
-        start += step
-
+                chunk_index += 1
+            if end == len(text):
+                break
+            start += step
     return chunks

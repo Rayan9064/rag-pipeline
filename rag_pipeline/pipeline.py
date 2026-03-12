@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .chunking import TextChunk, chunk_text
+from .chunking import TextChunk, load_documents, chunk_documents
 from .generator import Generator
 from .retriever import RetrievedChunk, Retriever
 
@@ -26,20 +26,10 @@ class RAGPipeline:
         if not docs_path.exists() or not docs_path.is_dir():
             raise ValueError(f"Invalid docs directory: {docs_path}")
 
-        all_chunks: list[TextChunk] = []
-        for file_path in sorted(docs_path.glob("*.txt")):
-            text = file_path.read_text(encoding="utf-8")
-            file_chunks = chunk_text(
-                text=text,
-                source=file_path.name,
-                chunk_size=self.chunk_size,
-                chunk_overlap=self.chunk_overlap,
-            )
-            all_chunks.extend(file_chunks)
-
+        docs = load_documents(str(docs_path))
+        all_chunks = chunk_documents(docs, chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
         if not all_chunks:
-            raise ValueError("No .txt documents with content were found to ingest.")
-
+            raise ValueError("No documents with content were found to ingest.")
         self.retriever.build_index(all_chunks)
         self._chunks = all_chunks
         return len(all_chunks)

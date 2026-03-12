@@ -1,0 +1,8 @@
+timestamp,question,answer,correct,latency_ms
+2026-03-12T14:40:35.167048,what is machine learning,"Supervised learning is a type of machine learning where the model learns from labeled data, meaning each training example consists of input data (features) along with their corresponding correct output (labels)",1,6370.1
+2026-03-12T14:40:41.664625,,[3],0,434.52
+2026-03-12T14:42:00.114094,classification learning steps,1. Data collection and preprocessing 2. Feature selection and engineering 3. Classification,0,913.83
+2026-03-12T14:42:40.567181,list advantages of KNN,"Simple and Intuitive: KNN is easy to understand and implement, making it suitable for beginners in machine learning. 2. Non-parametric: KNN doesn't make any assumptions about the underlying data distribution, making [2] computationally efficient during training. 3. Versatile: KNN can be applied to both classification and regression tasks, making it a versatile algorithm. 4. No Training Phase: KNN is a lazy learner, meaning it doesn't require a training phase. The model is simply memorizing the training data, making it computationally efficient during training. 5. Adaptability to New Data: KNN can easily adapt to new data without needing to retrain the model.",1,5672.6
+2026-03-12T14:43:03.765791,,[3],0,437.36
+2026-03-12T14:43:39.839874,applications of knn,it robust to noisy data and outliers,0,764.96
+2026-03-12T14:43:57.415213,list the applications of knn,classification tasks,0,817.62

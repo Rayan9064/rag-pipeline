@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 
 from rag_pipeline import RAGPipeline
 from rag_pipeline.otel import setup_otel
@@ -51,6 +52,16 @@ def main() -> None:
     print(f"Indexed chunks: {num_chunks}")
 
     import time
+    import csv
+    from datetime import datetime
+    log_file = "rag_feedback_log.csv"
+    log_fields = ["timestamp", "question", "answer", "correct", "latency_ms"]
+    # Create log file with header if not exists
+    if not os.path.exists(log_file):
+        with open(log_file, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=log_fields)
+            writer.writeheader()
+    
     while True:
         try:
             question = args.question
@@ -76,11 +87,23 @@ def main() -> None:
                 print(answer)
 
                 user_acc = input("Was the answer correct? (y/n): ").strip().lower()
-                if user_acc == "y":
+                correct = 1 if user_acc == "y" else 0
+                if correct:
                     accuracy_counter.add(1)
                     span.set_attribute("answer.accuracy", 1)
                 else:
                     span.set_attribute("answer.accuracy", 0)
+
+                # Log to CSV for feedback loop and monitoring
+                with open(log_file, "a", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=log_fields)
+                    writer.writerow({
+                        "timestamp": datetime.now().isoformat(),
+                        "question": question,
+                        "answer": answer,
+                        "correct": correct,
+                        "latency_ms": round(elapsed_ms, 2),
+                    })
 
             # After first question, clear args.question so next is interactive
             args.question = ""
